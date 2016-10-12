@@ -6,5 +6,9 @@ package com.nina.technosphere.hadoop;
 
 
 public class MyFileInputFormat {
+    public static void main(String[] args) {
+
+    }
+
 
 }
