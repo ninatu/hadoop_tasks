@@ -1,4 +1,4 @@
-package com.nina.technosphere.hadoop.WordCount;
+package com.nina.technosphere.hadoop.DocCount;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -7,19 +7,25 @@ import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.compress.CodecPool;
 import org.apache.hadoop.io.compress.CompressionCodec;
+import org.apache.hadoop.io.compress.CompressionInputStream;
+import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.io.compress.Decompressor;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.mapreduce.lib.input.FileSplit;
+import org.apache.hadoop.io.compress.DefaultCodec;
+import java.io.ByteArrayInputStream;
+import java.lang.String;
+import java.io.IOException;
 
 /**
  * Created by nina on 13.10.16.
  */
 
-public class WCRecordReader extends RecordReader<LongWritable, Text> {
+public class DCRecordReader extends RecordReader<LongWritable, Text> {
     private static final int DEFAULT_BUFFER_SIZE = 64 * 1024;
-    private int bufferSize = DEFAULT_BUFFER_SIZE;
-    //byte buffer[] = null;
+    byte buffer[] = null;
 
     private long start;
     private long pos;
@@ -29,7 +35,7 @@ public class WCRecordReader extends RecordReader<LongWritable, Text> {
     private CompressionInputStream compessStream = null;
     private LongWritable key = null;
     private Text value = null;
-    private CompressionCodec codec;
+    private DefaultCodec codec;
     private Decompressor decompressor;
 
     public WCRecordReader() {
@@ -42,12 +48,11 @@ public class WCRecordReader extends RecordReader<LongWritable, Text> {
         Configuration conf = context.getConfiguration();
         final FileSystem fileSystem = FileSystem.get(conf);
         final Path filePath = split.getPath();
-        final Path indexPath = new Path(filePath.toString() + String(".idx"));
+        final Path indexPath = new Path(filePath.toString() + new String(".idx"));
 
         codec = new DefaultCodec();
         codec.setConf(fileSystem.getConf());
-        decompressor = CodecPool.getDecompressor(codec)
-        //decompressor = codec.createDecompressor();
+        decompressor = CodecPool.getDecompressor(codec);
 
         fileStream = fileSystem.open(filePath);
         indexStream = fileSystem.open(indexPath); // проверить на  правильность открытия
@@ -75,13 +80,14 @@ public class WCRecordReader extends RecordReader<LongWritable, Text> {
             value = new Text();
         }
 
-        long sizeInput = Integer.reverseBytes(indexStream.getInt());
-        byte inputBytes[] = new byte[size_input];
+        int sizeInput = Integer.reverseBytes(indexStream.readInt());
+		pos += sizeInput;
+        byte inputBytes[] = new byte[sizeInput];
 
         int newSize = 0;
         int readBytes = 0;
         do {
-            readBytes = fileStream.read(inputBytes, newSize, sizeInput - newSize));
+            readBytes = fileStream.read(inputBytes, newSize, sizeInput - newSize);
             if (readBytes <= 0)
                 break; // EOF
             newSize += readBytes;
@@ -94,8 +100,7 @@ public class WCRecordReader extends RecordReader<LongWritable, Text> {
             readBytes = compessStream.read(buffer);
             if (readBytes <= 0)
                 break; // EOF
-            value.append(readBytes, 0, readBytes);
-            pos += readBytes;
+            value.append(buffer, 0, readBytes);
         }
         return true;
     }
@@ -127,7 +132,7 @@ public class WCRecordReader extends RecordReader<LongWritable, Text> {
             indexStream.close();
         }
         if (compessStream != null) {
-            IOUtil.closeStream(compessStream); // не уверена...
+            IOUtils.closeStream(compessStream); // не уверена...
         }
         CodecPool.returnDecompressor(decompressor);
         buffer = null;

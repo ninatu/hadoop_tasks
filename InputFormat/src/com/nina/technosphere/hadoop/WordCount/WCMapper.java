@@ -1,11 +1,14 @@
 package com.nina.technosphere.hadoop.WordCount;
 
+import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.mapreduce.Mapper;
+import org.apache.hadoop.conf.Configured;
+import java.util.regex.Pattern;
+
 /**
  * Created by nina on 13.10.16.
  */
-
-import java.util.regex.Pattern;
-
 
 public class WCMapper
         extends Mapper<LongWritable, Text, Text, LongWritable> {
