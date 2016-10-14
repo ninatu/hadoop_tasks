@@ -30,6 +30,7 @@ public class DCRecordReader extends RecordReader<LongWritable, Text> {
     private long start;
     private long pos;
     private long end;
+    private long start_index;
     private FSDataInputStream fileStream = null;
     private FSDataInputStream indexStream = null;
     private CompressionInputStream compessStream = null;
@@ -44,7 +45,7 @@ public class DCRecordReader extends RecordReader<LongWritable, Text> {
     @Override
     public void initialize(InputSplit genericSplit,
                            TaskAttemptContext context) throws IOException {
-        FileSplit split = (FileSplit) genericSplit;
+        DCFileSplit split = (DCFileSplit) genericSplit;
         Configuration conf = context.getConfiguration();
         final FileSystem fileSystem = FileSystem.get(conf);
         final Path filePath = split.getPath();
@@ -54,12 +55,19 @@ public class DCRecordReader extends RecordReader<LongWritable, Text> {
         codec.setConf(fileSystem.getConf());
         decompressor = CodecPool.getDecompressor(codec);
 
-        fileStream = fileSystem.open(filePath);
-        indexStream = fileSystem.open(indexPath); // проверить на  правильность открытия
-        buffer = new byte[DEFAULT_BUFFER_SIZE];
         start = split.getStart();
         end = start + split.getLength();
         pos = start;
+        start_index = split.getStartIndex();
+        end_index = start_index + split.getCountDocs();
+
+        fileStream = fileSystem.open(filePath);
+        indexStream = fileSystem.open(indexPath); // проверить на  правильность открытия
+
+        fileStream.seek(start);
+        indexStream.seek(start_index);
+
+        buffer = new byte[DEFAULT_BUFFER_SIZE];
     }
 
     @Override
