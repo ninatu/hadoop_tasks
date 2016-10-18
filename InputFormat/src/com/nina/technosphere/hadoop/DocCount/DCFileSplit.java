@@ -10,7 +10,9 @@ public class DCFileSplit extends FileSplit {
     private long startIndex; // start position in index_file
 
     public DCFileSplit(Path file, long start, long length,
-                       String[] hosts, long startIndex) {
+    public DCFileSplit(Path file, long start, long length,
+    public DCFileSplit(Path file, long start, long length,
+                       String[] hosts, long startIndex  ) {
         super(file, start, length, hosts);
         this.startIndex = startIndex;
     }
