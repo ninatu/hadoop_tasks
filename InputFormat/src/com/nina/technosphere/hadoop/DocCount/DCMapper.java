@@ -9,9 +9,6 @@ import java.util.regex.Matcher;
 import java.util.HashSet;
 import java.lang.Integer;
 import java.io.IOException;
-/**
- * Created by nina on 13.10.16.
- */
 
 public class DCMapper
         extends Mapper<LongWritable, Text, Text, LongWritable> {

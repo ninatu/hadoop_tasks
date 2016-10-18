@@ -26,18 +26,9 @@ import java.util.ArrayList;
 public class DCInputFormat
         extends FileInputFormat<LongWritable, Text> {
     public static final String BYTES_PER_MAP = "mapreduce.input.indexedgz.bytespermap";
-	//!!!!!!!!!!!!
-	private static int increment_docs = 0;
-	private static int callGetSplits = 0;
-	enum inputDebag {
-		CALL,
-		INCREMENTDOCS,
-		CALLGETSPLITS
-	}
     
 	public List<InputSplit> getSplits (JobContext job) throws IOException {
         List<InputSplit> splits = new ArrayList<InputSplit>();
-		callGetSplits +=1;
         long numBytesPerSplit = getNumBytesPerSplit(job);
         for (FileStatus status : listStatus(job)) {
             splits.addAll(getSplitsForFile(status, job.getConfiguration(), numBytesPerSplit));
@@ -47,17 +38,14 @@ public class DCInputFormat
 
     public RecordReader<LongWritable, Text> createRecordReader(
             InputSplit genericSplit, TaskAttemptContext context) throws IOException {
-        context.setStatus(genericSplit.toString());
-		context.getCounter(inputDebag.CALL).increment(1);
-		context.getCounter(inputDebag.INCREMENTDOCS).increment(increment_docs);
-		context.getCounter(inputDebag.CALLGETSPLITS).increment(callGetSplits);
-        return new DCRecordReader();
+        //context.setStatus(genericSplit.toString());
+		DCRecordReader recordReader = new DCRecordReader();
+		//recordReader.initialize(genericSplit, context);
+        return recordReader;
     }
 
-	//DELETE STATIC
     public List<DCFileSplit> getSplitsForFile(
             FileStatus status, Configuration conf, long numBytesPerSplit) throws IOException {
-		callGetSplits += 1;
         List<DCFileSplit> splits = new ArrayList<DCFileSplit>();
         FileSystem fileSystem = FileSystem.get(conf);
         Path path = status.getPath();
@@ -88,7 +76,6 @@ public class DCInputFormat
 					lengthFile += sizeDoc;
 					lengthIndex += 4;
 					countDocs += 1;
-					increment_docs += 1;
 					if (lengthFile >= numBytesPerSplit) {
 						splits.add(new DCFileSplit(path, beginFile, lengthFile, new String[]{}, beginIndex, countDocs));
 						beginFile += lengthFile;
@@ -117,7 +104,7 @@ public class DCInputFormat
         job.getConfiguration().setLong(BYTES_PER_MAP, numLines);
     }
     public static long getNumBytesPerSplit(JobContext job) {
-        return job.getConfiguration().getLong(BYTES_PER_MAP, 2000000000);
+        return job.getConfiguration().getLong(BYTES_PER_MAP, 20000000);
     }
 
 }

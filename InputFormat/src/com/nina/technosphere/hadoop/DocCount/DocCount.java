@@ -12,37 +12,36 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.log4j.Logger;
+import org.apache.hadoop.conf.Configured;
 
-/**
- * Created by nina on 13.10.16.
- */
 
-public class DocCount {
-	//private static final Logger LOG = Logger.getLogger(DocCount.class);
+public class DocCount  extends Configured implements Tool{
 
-    /*public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         int res = ToolRunner.run(new DocCount(), args);
         System.exit(res);
     }
 
     public int run(String[] args) throws Exception {
-    */
-	public static void main(String args[]) throws Exception {
-		Configuration conf = new Configuration();
-		Job job = Job.getInstance(conf, "doccount");
+    
+	//public static void main(String args[]) throws Exception {
+	//	Configuration conf = new Configuration();
+	//	Job job = Job.getInstance(conf, "docCount");
+		Job job = Job.getInstance(getConf(), "docCount");
         job.setJarByClass(DocCount.class);
 
 		FileInputFormat.addInputPath(job, new Path(args[0]));
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
 		job.setInputFormatClass(DCInputFormat.class);
-		job.getConfiguration().setLong("mapreduce.input.indexedgz.bytespermap", 2000000000);
+		//job.getConfiguration().setLong("mapreduce.input.indexedgz.bytespermap", 20000000);
         job.setMapperClass(DCMapper.class);
         job.setCombinerClass(DCReducer.class);
         job.setReducerClass(DCReducer.class);
         job.setOutputKeyClass(Text.class);
         job.setOutputValueClass(LongWritable.class);
 		job.setOutputFormatClass(TextOutputFormat.class);
-		System.exit(job.waitForCompletion(true) ? 0 : 1);
+		return job.waitForCompletion(true) ? 0 : 1;
+	//	System.exit(job.waitForCompletion(true) ? 0 : 1);
     }
 }

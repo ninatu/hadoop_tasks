@@ -1,5 +1,8 @@
 package com.nina.technosphere.hadoop.DocCount;
 
+import java.io.IOException;
+import java.io.DataInput;
+import java.io.DataOutput;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.fs.Path;
 
@@ -16,20 +19,25 @@ public class DCFileSplit extends FileSplit {
                        String[] _hosts, long _startIndex, long _countDocs) {
         super(_file, _start, _length, _hosts);
         startIndex = _startIndex;
-		countDocs = 3;//_countDocs;
+		countDocs =_countDocs;
     }
 	
-	/*public DCFileSplit(Path file, long start, long length,
-                       String[] hosts, long startIndex, long countDocs) {
-        super(file, start, length, hosts);
-        this.startIndex = startIndex;
-		this.countDocs = countDocs;
-    }*/
-
     public long getStartIndex() {
         return startIndex;
     }
 	public long getCountDocs() {
 		return countDocs;
+	}
+	@Override
+	public void write(DataOutput out) throws IOException {
+		super.write(out);
+	    out.writeLong(startIndex);
+	    out.writeLong(countDocs);
+	}
+	@Override
+	public void readFields(DataInput in) throws IOException {
+		super.readFields(in);
+		startIndex = in.readLong();
+		countDocs = in.readLong();
 	}
 }

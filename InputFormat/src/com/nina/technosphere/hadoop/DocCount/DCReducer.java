@@ -6,9 +6,6 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.conf.Configured;
 import java.io.IOException;
-/**
- * Created by nina on 13.10.16.
- */
 
 public class DCReducer
         extends Reducer<Text, LongWritable, Text, LongWritable> {
