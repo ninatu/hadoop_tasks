@@ -1,6 +1,7 @@
 package com.nina.technosphere.hadoop.DocCount;
 
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
+import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.InputSplit;
@@ -15,6 +16,7 @@ import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import java.io.IOException;
+import java.io.EOFException;
 import java.util.List;
 import java.util.ArrayList;
 /**
@@ -24,80 +26,98 @@ import java.util.ArrayList;
 public class DCInputFormat
         extends FileInputFormat<LongWritable, Text> {
     public static final String BYTES_PER_MAP = "mapreduce.input.indexedgz.bytespermap";
-
-    public List<InputSplit> getSplits(JobContext job) throws IOException {
+	//!!!!!!!!!!!!
+	private static int increment_docs = 0;
+	private static int callGetSplits = 0;
+	enum inputDebag {
+		CALL,
+		INCREMENTDOCS,
+		CALLGETSPLITS
+	}
+    
+	public List<InputSplit> getSplits (JobContext job) throws IOException {
         List<InputSplit> splits = new ArrayList<InputSplit>();
-        int numBytesPerSplit = getNumBytesPerSplit(job);
+		callGetSplits +=1;
+        long numBytesPerSplit = getNumBytesPerSplit(job);
         for (FileStatus status : listStatus(job)) {
             splits.addAll(getSplitsForFile(status, job.getConfiguration(), numBytesPerSplit));
         }
 	    return splits;
     }
 
-
     public RecordReader<LongWritable, Text> createRecordReader(
             InputSplit genericSplit, TaskAttemptContext context) throws IOException {
         context.setStatus(genericSplit.toString());
+		context.getCounter(inputDebag.CALL).increment(1);
+		context.getCounter(inputDebag.INCREMENTDOCS).increment(increment_docs);
+		context.getCounter(inputDebag.CALLGETSPLITS).increment(callGetSplits);
         return new DCRecordReader();
     }
 
-
-    public static List<DCFileSplit> getSplitsForFile(
-            FileStatus status, Configuration conf, int numBytesPerSplit) throws IOException {
+	//DELETE STATIC
+    public List<DCFileSplit> getSplitsForFile(
+            FileStatus status, Configuration conf, long numBytesPerSplit) throws IOException {
+		callGetSplits += 1;
         List<DCFileSplit> splits = new ArrayList<DCFileSplit>();
         FileSystem fileSystem = FileSystem.get(conf);
-        Path path = path = status.getPath();
+        Path path = status.getPath();
         if (status.isDirectory()) {
             throw new IOException("Not a file: " + path);
         }
-        FileSystem cSummary = fileSystem.getContentSummary(path);
-        long all_length = cSummary.getLength();
 
-        Path indexPath = new Path(filePath.toString() + new String(".idx"));
+        Path indexPath = new Path(path.toString() + new String(".idx"));
         if (fileSystem.exists(indexPath) == false) {
             throw new IOException("Don't exists a file: " + indexPath);
         }
-                if (fileSystem.isFile(indexPath) == false) {
+        if (fileSystem.isFile(indexPath) == false) {
             throw new IOException("Not a file: " + indexPath);
         }
+		FSDataInputStream indexStream = null;
+		try {
 
-        FSDataInputStream indexStream  = fileSystem.open(indexPath);
+			indexStream  = fileSystem.open(indexPath);
 
-        int beginFile = 0;
-        int beginIndex = 0;
-        int lengthFile = 0;
-        int lengthIndex = 0
-        while(true) {
-            try {
-                int sizeDoc = Integer.reverseBytes(indexStream.readInt());
-                lengthFile += sizeDoc;
-                lengthIndex += 4;
-                if (lengthFile >= numBytesPerSplit) {
-                    splits.add(DCFileSplit(path, beginFile, lengthFile,
-                            new String[]{}, beginIndex));
-                    beginFile += lengthFile;
-                    beginIndex += lengthIndex;
-                    lengthFile = 0;
-                    lengthIndex = 0;
-
-                }
-
-            } catch (EOFException eof) {
-                if (lengthFile != 0) {
-                    splits.add(DCFileSplit(path, beginFile, lengthFile,
-                            new String[]{}, beginIndex));
-                }
-                break;
-            }
-        }
+			long beginFile = 0;
+			long beginIndex = 0;
+			long lengthFile = 0;
+			long lengthIndex = 0;
+			long countDocs = 0;
+			while(true) {
+				try {
+					int sizeDoc = Integer.reverseBytes(indexStream.readInt());
+					lengthFile += sizeDoc;
+					lengthIndex += 4;
+					countDocs += 1;
+					increment_docs += 1;
+					if (lengthFile >= numBytesPerSplit) {
+						splits.add(new DCFileSplit(path, beginFile, lengthFile, new String[]{}, beginIndex, countDocs));
+						beginFile += lengthFile;
+						beginIndex += lengthIndex;
+						lengthFile = 0;
+						lengthIndex = 0;
+						countDocs = 0;
+					}
+				} catch (EOFException eof) {
+					if (countDocs != 0) {
+						splits.add(new DCFileSplit(path, beginFile, lengthFile, new String[]{}, beginIndex, countDocs));
+					}
+					break;
+				}
+			}
+		} finally  {
+			if (indexStream != null) {
+				indexStream.close();
+			}
+		}
+					
         return splits;
     }
 
-    public static void setNumBytesPerSplit(Job job, int numLines) {
-        job.getConfiguration().setInt(BYTES_PER_MAP, numLines);
+    public static void setNumBytesPerSplit(Job job, long  numLines) {
+        job.getConfiguration().setLong(BYTES_PER_MAP, numLines);
     }
-    public static int getNumBytesPerSplit(JobContext job) {
-        return job.getConfiguration().getInt(BYTES_PER_MAP, 1);
+    public static long getNumBytesPerSplit(JobContext job) {
+        return job.getConfiguration().getLong(BYTES_PER_MAP, 2000000000);
     }
 
 }

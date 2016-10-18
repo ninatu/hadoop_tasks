@@ -18,6 +18,8 @@ import org.apache.hadoop.io.compress.DefaultCodec;
 import java.io.ByteArrayInputStream;
 import java.lang.String;
 import java.io.IOException;
+import java.io.EOFException;
+import java.lang.Exception;
 
 /**
  * Created by nina on 13.10.16.
@@ -28,9 +30,11 @@ public class DCRecordReader extends RecordReader<LongWritable, Text> {
     byte buffer[] = null;
 
     private long start;
-    private long pos;
+	private long pos;
     private long end;
-    private long start_index;
+    private long startIndex;
+	private long countDocs;
+	private long curDocs;
     private FSDataInputStream fileStream = null;
     private FSDataInputStream indexStream = null;
     private CompressionInputStream compessStream = null;
@@ -38,13 +42,23 @@ public class DCRecordReader extends RecordReader<LongWritable, Text> {
     private Text value = null;
     private DefaultCodec codec;
     private Decompressor decompressor;
+	
+	private TaskAttemptContext myContext;
 
-    public WCRecordReader() {
+	enum allDebag {
+		CURDOCS,
+		CURDOC_CHECK_EOF,
+		TRYREAD,
+		COUNTDOCSNULL;
+
+	}
+    public DCRecordReader() {
     }
 
     @Override
     public void initialize(InputSplit genericSplit,
                            TaskAttemptContext context) throws IOException {
+		myContext = context;
         DCFileSplit split = (DCFileSplit) genericSplit;
         Configuration conf = context.getConfiguration();
         final FileSystem fileSystem = FileSystem.get(conf);
@@ -58,14 +72,17 @@ public class DCRecordReader extends RecordReader<LongWritable, Text> {
         start = split.getStart();
         end = start + split.getLength();
         pos = start;
-        start_index = split.getStartIndex();
-        end_index = start_index + split.getCountDocs();
-
+        startIndex = split.getStartIndex();
+		countDocs = split.getCountDocs();
+		curDocs = 0;
+		if (countDocs == 0)
+			myContext.getCounter(allDebag.COUNTDOCSNULL).increment(1);
+			
         fileStream = fileSystem.open(filePath);
-        indexStream = fileSystem.open(indexPath); // проверить на  правильность открытия
+        indexStream = fileSystem.open(indexPath); 
 
         fileStream.seek(start);
-        indexStream.seek(start_index);
+        indexStream.seek(startIndex);
 
         buffer = new byte[DEFAULT_BUFFER_SIZE];
     }
@@ -73,9 +90,20 @@ public class DCRecordReader extends RecordReader<LongWritable, Text> {
     @Override
     public boolean nextKeyValue() throws IOException {
         //If end of file
-        if (pos == end) {
-            key = null;
+        //if (fileStream.getPos() >= end) {
+        if (curDocs >= countDocs) {
+			///!!!!!!!!!!!!!!!!!
+			myContext.getCounter(allDebag.CURDOC_CHECK_EOF).increment(1);
+			key = null;
             value = null;
+			if (indexStream != null) {
+				indexStream.close();
+				indexStream = null;
+			}
+			if (fileStream != null) {
+				fileStream.close();
+				fileStream = null;
+			}
             return false;
         }
 
@@ -83,33 +111,46 @@ public class DCRecordReader extends RecordReader<LongWritable, Text> {
         if (key == null) {
             key = new LongWritable();
         }
-        key.set(pos);
+        key.set(fileStream.getPos());
         if (value == null) {
             value = new Text();
         }
 
         int sizeInput = Integer.reverseBytes(indexStream.readInt());
+		curDocs += 1;
+		myContext.getCounter(allDebag.CURDOCS).increment(1);
 		pos += sizeInput;
         byte inputBytes[] = new byte[sizeInput];
 
-        int newSize = 0;
-        int readBytes = 0;
+        //int  newSize = 0;
+		int  readBytes = 0;
+		fileStream.readFully(inputBytes, 0, sizeInput);
+		/*
         do {
-            readBytes = fileStream.read(inputBytes, newSize, sizeInput - newSize);
-            if (readBytes <= 0)
-                break; // EOF
-            newSize += readBytes;
+			//try {
+				readBytes = fileStream.read(inputBytes, newSize, sizeInput - newSize);
+				if (readBytes <= 0)
+					break; // EOF
+				newSize += readBytes;
+			//} catch (IOException eof) {
+			//	break;
+			//}
         }  while (newSize != sizeInput);
-
+		*/		
         compessStream = codec.createInputStream(new ByteArrayInputStream(inputBytes), decompressor);
-        /// где его закрывать???
         value.clear();
         while(true) {
-            readBytes = compessStream.read(buffer);
-            if (readBytes <= 0)
-                break; // EOF
-            value.append(buffer, 0, readBytes);
+			try {
+				myContext.getCounter(allDebag.TRYREAD).increment(1);
+				readBytes = compessStream.read(buffer);
+				if (readBytes <= 0)
+					break; // EOF
+				value.append(buffer, 0, readBytes);
+			} catch (EOFException eof) {
+				break;
+			}
         }
+		compessStream.close();
         return true;
     }
 
@@ -128,7 +169,7 @@ public class DCRecordReader extends RecordReader<LongWritable, Text> {
         if (end - start == 0) {
             return 1.0f;
         } else {
-            return (float) (pos - start) / (float) (end - start);
+            return (float)(pos  - start) / (float) (end - start);
         }
     }
 
