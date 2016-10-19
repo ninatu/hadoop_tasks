@@ -6,20 +6,16 @@ import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.compress.CodecPool;
-import org.apache.hadoop.io.compress.CompressionCodec;
 import org.apache.hadoop.io.compress.CompressionInputStream;
-import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.io.compress.Decompressor;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
-import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.io.compress.DefaultCodec;
 import java.io.ByteArrayInputStream;
 import java.lang.String;
 import java.io.IOException;
 import java.io.EOFException;
-import java.lang.Exception;
 
 
 public class DCRecordReader extends RecordReader<LongWritable, Text> {

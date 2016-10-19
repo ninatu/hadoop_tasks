@@ -6,9 +6,6 @@ import java.io.DataOutput;
 import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.fs.Path;
 
-/**
- * Created by nina on 14.10.16.
- */
 
 public class DCFileSplit extends FileSplit {
     private long startIndex; // start position in index_file

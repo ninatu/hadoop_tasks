@@ -9,9 +9,7 @@ import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.mapreduce.lib.input.FileSplit;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.fs.ContentSummary;
 import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -19,9 +17,6 @@ import java.io.IOException;
 import java.io.EOFException;
 import java.util.List;
 import java.util.ArrayList;
-/**
- * Created by nina on 13.10.16.
- */
 
 public class DCInputFormat
         extends FileInputFormat<LongWritable, Text> {

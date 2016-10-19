@@ -4,7 +4,6 @@ package com.nina.technosphere.hadoop.DocCount;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.conf.Configured;
 import java.io.IOException;
 
 public class DCReducer
