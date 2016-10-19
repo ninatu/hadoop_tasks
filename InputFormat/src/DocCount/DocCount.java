@@ -1,4 +1,4 @@
-package com.nina.technosphere.hadoop.DocCount;
+package DocCount;
 
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
@@ -28,7 +28,6 @@ public class DocCount  extends Configured implements Tool{
 		FileOutputFormat.setOutputPath(job, new Path(args[1]));
 
 		job.setInputFormatClass(DCInputFormat.class);
-		job.getConfiguration().setLong("mapreduce.input.indexedgz.bytespermap", 10000000);
         job.setMapperClass(DCMapper.class);
         job.setCombinerClass(DCReducer.class);
         job.setReducerClass(DCReducer.class);

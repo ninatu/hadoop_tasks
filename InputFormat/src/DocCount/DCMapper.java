@@ -1,4 +1,4 @@
-package com.nina.technosphere.hadoop.DocCount;
+package DocCount;
 
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.Text;

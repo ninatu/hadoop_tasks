@@ -1,4 +1,4 @@
-package com.nina.technosphere.hadoop.DocCount;
+package DocCount;
 
 import java.io.IOException;
 import java.io.DataInput;

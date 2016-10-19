@@ -1,4 +1,4 @@
-package com.nina.technosphere.hadoop.DocCount;
+package DocCount;
 
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.fs.FSDataInputStream;
