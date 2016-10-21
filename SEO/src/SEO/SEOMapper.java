@@ -1,5 +1,6 @@
 package SEO;
 
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.NullWritable;
 import org.apache.hadoop.io.Text;
@@ -12,7 +13,8 @@ import java.net.URL;
 /**
  * Created by nina on 20.10.16.
  */
-public class SEOMapper extends Mapper<LongWritable, Text, TextPair, NullWritable> {
+public class SEOMapper extends Mapper<LongWritable, Text, TextPair, IntWritable> {
+    private static IntWritable one = new IntWritable(1);
     @Override
     protected void map(LongWritable key, Text value, Context context) throws IOException, InterruptedException {
         String line = value.toString();
@@ -21,7 +23,7 @@ public class SEOMapper extends Mapper<LongWritable, Text, TextPair, NullWritable
         if (items.length == 2) {
             try {
                 URL url = new URL(items[1]);
-                context.write(new TextPair(url.getHost(),items[0]), NullWritable.get());
+                context.write(new TextPair(url.getHost(),items[0]), one);
             } catch (MalformedURLException e) {
                 context.getCounter("COMMON_COUNTERS", "MalformedUrls").increment(1);
             }

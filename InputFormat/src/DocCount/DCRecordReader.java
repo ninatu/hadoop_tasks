@@ -100,18 +100,18 @@ public class DCRecordReader extends RecordReader<LongWritable, Text> {
 		fileStream.readFully(inputBytes, 0, sizeInput);
         compessStream = codec.createInputStream(new ByteArrayInputStream(inputBytes), decompressor);
     
-		value.clear();
-		int  readBytes = 0;
-        while(true) {
-			try {
-				readBytes = compessStream.read(buffer);
-				if (readBytes <= 0)
-					break; // EOF
-				value.append(buffer, 0, readBytes);
-			} catch (EOFException eof) {
-				break;
-			}
-        }
+value.clear();
+int  readBytes = 0;
+while(true) {
+    try {
+        readBytes = compessStream.read(buffer);
+        if (readBytes <= 0)
+            break; // EOF
+        value.append(buffer, 0, readBytes);
+    } catch (EOFException eof) {
+        break;
+    }
+}
 		compessStream.close();
         return true;
     }
@@ -142,7 +142,6 @@ public class DCRecordReader extends RecordReader<LongWritable, Text> {
         if (indexStream != null) {
             indexStream.close();
         }
-        CodecPool.returnDecompressor(decompressor);
         buffer = null;
     }
 }

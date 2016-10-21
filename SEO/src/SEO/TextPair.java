@@ -63,4 +63,13 @@ public class TextPair implements WritableComparable<TextPair> {
         }
         return second.compareTo(tp2.getSecond());
     }
+	@Override
+	public boolean equals(Object o) {
+		if (o instanceof TextPair) {
+			TextPair tp = (TextPair) o;
+			return first.equals(tp.getFirst()) && second.equals(tp.getSecond());
+		}
+		return false;
+	}
+	
 }

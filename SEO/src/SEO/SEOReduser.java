@@ -1,6 +1,6 @@
 package SEO;
 
-import org.apache.hadoop.io.NullWritable;
+import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Reducer;
 
@@ -10,58 +10,44 @@ import java.io.IOException;
 /**
  * Created by nina on 21.10.16.
  */
-public class SEOReduser extends  Reducer<TextPair, NullWritable, Text, Text> {
+public class SEOReduser extends  Reducer<TextPair, IntWritable, Text, Text> {
     // текущий хост(хост, который сейчас обрабатывается)
     private Text curHost = null;
-    // текущая пара: хост + запрос
-    private TextPair curTextPair = null;
-    // сколько раз встретилось curTextPair
-    private int count;
-    // пара соотвествующая текущему хосту и наиболее часто встречаемому запросу
-    private TextPair bestTextPair = null;
-    // сколько раз встретилось bestTextPair
+    // наиболее часто встречаемый запрос
+    private Text bestQuery = null;
+    // сколько раз встретился bestQuery
     private int maxCount;
 
     @Override
-    public void reduce(TextPair key, Iterable<NullWritable> v, Context context) throws IOException, InterruptedException  {
+    public void reduce(TextPair key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException  {
         // инициализация для первого вызова
         if (curHost == null) {
             curHost = key.getFirst();
-            curTextPair = key;
-            count = 1;
-            return;
         }
 
-        // если это тот же хост
-        if (key.getFirst().compareTo(curHost) == 0) {
-            // если это тот же запрос
-            if (curTextPair.compareTo(key) == 0) {
-                count++;
-            } else {
-                if (bestTextPair == null) {
-                    bestTextPair = curTextPair;
-                    maxCount = count;
-                }
-                curTextPair = key;
-                count = 1;
-            }
-        } else {
-            // выводим хост и лучший запрос
-            context.write(bestTextPair.getFirst(), bestTextPair.getSecond());
+        // если мы перешли к обработке следующего хоста
+        if (!key.getFirst().equals(curHost)) {
+            context.write(curHost, bestQuery);
             curHost = key.getFirst();
-            curTextPair = key;
-            count = 1;
-            bestTextPair = null;
+            bestQuery = null;
+        }
+        int count = 0;
+        for (IntWritable value: values) {
+            count += value.get();
+        }
+        if (bestQuery == null) {
+            bestQuery = key.getSecond();
+            maxCount = count;
+        } else if (count > maxCount) {
+            bestQuery = key.getSecond();
+            maxCount = count;
         }
     }
 
     @Override
     public void cleanup(Context context) throws IOException, InterruptedException {
-        if (curHost.compareTo(null) != 0) {
-            context.write(bestTextPair.getFirst(), bestTextPair.getSecond());
-        }
+        if (curHost != null) {
+    		context.write(curHost, bestQuery);
+		}
     }
-
-
-
 }
