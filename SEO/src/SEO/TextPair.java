@@ -26,6 +26,8 @@ public class TextPair implements WritableComparable<TextPair> {
         set(first, second);
     }
 
+    //TextPair(TextPair tp) { set(new Text(tp.getFirst()), new Text(tp.getSecond())); }
+
     private void set(Text text1, Text text2) {
         first = text1;
         second = text2;
@@ -56,18 +58,19 @@ public class TextPair implements WritableComparable<TextPair> {
     }
 
     @Override
-    public int compareTo(TextPair tp2) {
-        int cmp = first.compareTo(tp2.getFirst());
+    public int compareTo(TextPair tp) {
+        int cmp = (first.toString()).compareTo(tp.getFirst().toString());
         if (cmp != 0) {
             return cmp;
         }
-        return second.compareTo(tp2.getSecond());
+        return (second.toString()).compareTo(tp.getSecond().toString());
     }
 	@Override
 	public boolean equals(Object o) {
 		if (o instanceof TextPair) {
 			TextPair tp = (TextPair) o;
-			return first.equals(tp.getFirst()) && second.equals(tp.getSecond());
+			return (first.toString()).equals(tp.getFirst().toString()) &&
+                    (second.toString()).equals(tp.getSecond().toString());
 		}
 		return false;
 	}

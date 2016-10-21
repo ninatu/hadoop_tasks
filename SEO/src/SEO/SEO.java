@@ -37,6 +37,8 @@ public class SEO extends Configured implements Tool {
         job.setMapperClass(SEOMapper.class);
         // FirstPartitioner разделяет по первому полю ключа(по хосту)
         job.setPartitionerClass(FirstPartitioner.class);
+        // Сортирует ключи сначала по первому полю потом по второму
+        job.setSortComparatorClass(TextPairComparator.class);
         // GroupFirstComparator групирует по первому полю ключа(по хосту)
         job.setGroupingComparatorClass(GroupFirstComparator.class);
         // SEOReduser выводит хост и лучший запрос

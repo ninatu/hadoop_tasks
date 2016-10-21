@@ -11,6 +11,7 @@ public class TextPairComparator extends WritableComparator {
         super(TextPair.class, true);
     }
 
+    @Override
     public int compare(WritableComparable value1, WritableComparable value2) {
         TextPair tp1 = (TextPair) value1;
         TextPair tp2 = (TextPair) value2;

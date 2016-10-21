@@ -16,6 +16,6 @@ public class GroupFirstComparator extends WritableComparator {
     public int compare(WritableComparable value1, WritableComparable value2) {
         TextPair tp1 = (TextPair) value1;
         TextPair tp2 = (TextPair) value2;
-        return tp1.getFirst().compareTo(tp2.getFirst());
+        return (tp1.getFirst().toString()).compareTo(tp2.getFirst().toString());
     }
 }

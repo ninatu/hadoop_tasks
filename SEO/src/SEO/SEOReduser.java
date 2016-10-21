@@ -19,16 +19,25 @@ public class SEOReduser extends  Reducer<TextPair, IntWritable, Text, Text> {
     private int maxCount;
 
     @Override
+    public void setup(Context context) {
+        curHost = null;
+        bestQuery = null;
+    }
+    @Override
     public void reduce(TextPair key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException  {
+        context.getCounter("COMMON_COUNTERS", "CountKeys").increment(1);
+
         // инициализация для первого вызова
         if (curHost == null) {
-            curHost = key.getFirst();
+            curHost = new Text(key.getFirst());
         }
 
+        //context.write(curHost, key.getFirst());
         // если мы перешли к обработке следующего хоста
-        if (!key.getFirst().equals(curHost)) {
+        if ((key.getFirst().toString()).compareTo(curHost.toString()) != 0) {
+            context.getCounter("COMMON_COUNTERS", "nextHost").increment(1);
             context.write(curHost, bestQuery);
-            curHost = key.getFirst();
+            curHost = new Text(key.getFirst());
             bestQuery = null;
         }
         int count = 0;
@@ -36,10 +45,10 @@ public class SEOReduser extends  Reducer<TextPair, IntWritable, Text, Text> {
             count += value.get();
         }
         if (bestQuery == null) {
-            bestQuery = key.getSecond();
+            bestQuery = new Text(key.getSecond());
             maxCount = count;
         } else if (count > maxCount) {
-            bestQuery = key.getSecond();
+            bestQuery = new Text(key.getSecond());
             maxCount = count;
         }
     }
@@ -47,6 +56,7 @@ public class SEOReduser extends  Reducer<TextPair, IntWritable, Text, Text> {
     @Override
     public void cleanup(Context context) throws IOException, InterruptedException {
         if (curHost != null) {
+            context.getCounter("COMMON_COUNTERS", "writeHostCleanup").increment(1);
     		context.write(curHost, bestQuery);
 		}
     }
