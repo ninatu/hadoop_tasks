@@ -10,7 +10,9 @@ import java.io.IOException;
 /**
  * Created by nina on 21.10.16.
  */
-public class SEOReduser extends  Reducer<TextPair, IntWritable, Text, Text> {
+public class SEOReduser extends  Reducer<TextPair, IntWritable, TextPair, IntWritable> {
+    // не выводить если кликов по запросу меньше чем nclicks_min
+    int nclicks_min = 1;
     // текущий хост(хост, который сейчас обрабатывается)
     private Text curHost = null;
     // наиболее часто встречаемый запрос
@@ -22,6 +24,7 @@ public class SEOReduser extends  Reducer<TextPair, IntWritable, Text, Text> {
     public void setup(Context context) {
         curHost = null;
         bestQuery = null;
+        nclicks_min = context.getConfiguration().getInt("seo.minclicks", nclicks_min);
     }
     @Override
     public void reduce(TextPair key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException  {
@@ -32,11 +35,12 @@ public class SEOReduser extends  Reducer<TextPair, IntWritable, Text, Text> {
             curHost = new Text(key.getFirst());
         }
 
-        //context.write(curHost, key.getFirst());
         // если мы перешли к обработке следующего хоста
-        if ((key.getFirst().toString()).compareTo(curHost.toString()) != 0) {
+        if (key.getFirst().toString().compareTo(curHost.toString()) != 0) {
             context.getCounter("COMMON_COUNTERS", "nextHost").increment(1);
-            context.write(curHost, bestQuery);
+            if (maxCount >= nclicks_min) {
+                context.write(new TextPair(curHost, bestQuery), new IntWritable(maxCount));
+            }
             curHost = new Text(key.getFirst());
             bestQuery = null;
         }
@@ -57,7 +61,9 @@ public class SEOReduser extends  Reducer<TextPair, IntWritable, Text, Text> {
     public void cleanup(Context context) throws IOException, InterruptedException {
         if (curHost != null) {
             context.getCounter("COMMON_COUNTERS", "writeHostCleanup").increment(1);
-    		context.write(curHost, bestQuery);
-		}
+            if (maxCount >= nclicks_min) {
+                context.write(new TextPair(curHost, bestQuery), new IntWritable(maxCount));
+            }
+        }
     }
 }

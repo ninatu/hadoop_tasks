@@ -36,18 +36,18 @@ public class SEO extends Configured implements Tool {
         // SEOMapper выводит ключ=пара(хост, запрос) и value=null
         job.setMapperClass(SEOMapper.class);
         // FirstPartitioner разделяет по первому полю ключа(по хосту)
+        job.setCombinerClass(SEOCombiner.class);
         job.setPartitionerClass(FirstPartitioner.class);
         // Сортирует ключи сначала по первому полю потом по второму
         job.setSortComparatorClass(TextPairComparator.class);
-        // GroupFirstComparator групирует по первому полю ключа(по хосту)
-        job.setGroupingComparatorClass(GroupFirstComparator.class);
+        job.setGroupingComparatorClass(TextPairComparator.class);
         // SEOReduser выводит хост и лучший запрос
         job.setReducerClass(SEOReduser.class);
 
         job.setMapOutputKeyClass(TextPair.class);
         job.setMapOutputValueClass(IntWritable.class);
-        job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(Text.class);
+        job.setOutputKeyClass(TextPair.class);
+        job.setOutputValueClass(IntWritable.class);
         return job;
     }
 }

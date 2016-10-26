@@ -3,6 +3,7 @@ package SEO;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.WritableComparable;
 
+import javax.annotation.Nonnull;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -58,21 +59,24 @@ public class TextPair implements WritableComparable<TextPair> {
     }
 
     @Override
-    public int compareTo(TextPair tp) {
-        int cmp = (first.toString()).compareTo(tp.getFirst().toString());
+    public int compareTo(@Nonnull TextPair tp) {
+        int cmp = first.compareTo(tp.getFirst());
         if (cmp != 0) {
             return cmp;
         }
-        return (second.toString()).compareTo(tp.getSecond().toString());
+        return second.compareTo(tp.getSecond());
     }
 	@Override
 	public boolean equals(Object o) {
 		if (o instanceof TextPair) {
 			TextPair tp = (TextPair) o;
-			return (first.toString()).equals(tp.getFirst().toString()) &&
-                    (second.toString()).equals(tp.getSecond().toString());
+			return first.equals(tp.getFirst()) && second.equals(tp.getSecond());
 		}
 		return false;
 	}
+    @Override
+    public String toString() {
+        return first + "\t" + second;
+    }
 	
 }
