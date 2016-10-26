@@ -5,6 +5,7 @@ import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
+import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 import org.apache.hadoop.fs.Path;
@@ -44,6 +45,7 @@ public class SEO extends Configured implements Tool {
         // SEOReduser выводит хост и лучший запрос
         job.setReducerClass(SEOReduser.class);
 
+        job.setOutputFormatClass(TextOutputFormat.class);
         job.setMapOutputKeyClass(TextPair.class);
         job.setMapOutputValueClass(IntWritable.class);
         job.setOutputKeyClass(TextPair.class);
