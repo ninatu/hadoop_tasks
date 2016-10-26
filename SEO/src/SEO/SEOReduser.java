@@ -28,7 +28,6 @@ public class SEOReduser extends  Reducer<TextPair, IntWritable, TextPair, IntWri
     }
     @Override
     public void reduce(TextPair key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException  {
-        context.getCounter("COMMON_COUNTERS", "CountKeys").increment(1);
 
         // инициализация для первого вызова
         if (curHost == null) {
@@ -37,7 +36,6 @@ public class SEOReduser extends  Reducer<TextPair, IntWritable, TextPair, IntWri
 
         // если мы перешли к обработке следующего хоста
         if (key.getFirst().toString().compareTo(curHost.toString()) != 0) {
-            context.getCounter("COMMON_COUNTERS", "nextHost").increment(1);
             if (maxCount >= nclicks_min) {
                 context.write(new TextPair(curHost, bestQuery), new IntWritable(maxCount));
             }
@@ -60,7 +58,6 @@ public class SEOReduser extends  Reducer<TextPair, IntWritable, TextPair, IntWri
     @Override
     public void cleanup(Context context) throws IOException, InterruptedException {
         if (curHost != null) {
-            context.getCounter("COMMON_COUNTERS", "writeHostCleanup").increment(1);
             if (maxCount >= nclicks_min) {
                 context.write(new TextPair(curHost, bestQuery), new IntWritable(maxCount));
             }
