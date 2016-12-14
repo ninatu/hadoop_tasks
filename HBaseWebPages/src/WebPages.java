@@ -6,7 +6,6 @@ import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
@@ -16,15 +15,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class WebPages extends Configured implements Tool {
-    String webPagesTable = new String("webpages_nina");
-    String webSitesTable = new String("websites_nina");
 
     public static void main(String[] args) throws Exception {
         int rc = ToolRunner.run(HBaseConfiguration.create(), new WebPages(), args);
         System.exit(rc);
     }
 
-    Job getJobConf() throws IOException {
+    Job getJobConf(String webPagesTable, String webSitesTable) throws IOException {
         Job job = Job.getInstance(getConf(), "HBaseWebPages");
         job.setJarByClass(WebPages.class);
 
@@ -37,6 +34,8 @@ public class WebPages extends Configured implements Tool {
         scans.add(scan1);
         scans.add(scan2);
 
+        WebPagesMapper.setWebPagesTable(job, webPagesTable);
+        WebPagesMapper.setWebSitesTable(job, webSitesTable);
         TableMapReduceUtil.initTableMapperJob(scans, WebPagesMapper.class, Text.class, Text.class, job);
         TableMapReduceUtil.initTableReducerJob(webPagesTable, WebPagesReducer.class, job);
 
@@ -49,7 +48,7 @@ public class WebPages extends Configured implements Tool {
         return job;
     }
 
-    Job getJobConf2(String outPath) throws IOException {
+    Job getJobConf2(String webPagesTable, String webSitesTable, String outPath)  throws IOException {
         Job job = Job.getInstance(getConf(), WebPages.class.getCanonicalName());
         job.setJarByClass(WebPages.class);
 
@@ -67,6 +66,8 @@ public class WebPages extends Configured implements Tool {
         scans.add(scan1);
         scans.add(scan2);
 
+        WebPagesMapper.setWebPagesTable(job, webPagesTable);
+        WebPagesMapper.setWebSitesTable(job, webSitesTable);
         TableMapReduceUtil.initTableMapperJob(scans, WebPagesMapper.class, Text.class, Text.class, job);
         job.setMapOutputKeyClass(Text.class);
         job.setMapOutputValueClass(Text.class);
@@ -80,7 +81,7 @@ public class WebPages extends Configured implements Tool {
 
     @Override
     public int run(String[] args) throws Exception {
-        Job job = getJobConf();
+        Job job = getJobConf(args[0], args[1]);
         return job.waitForCompletion(true) ? 0 : 1;
     }
 }
