@@ -1,12 +1,10 @@
 import org.apache.hadoop.conf.Configured;
-import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
-import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 import org.apache.hadoop.util.Tool;
 import org.apache.hadoop.util.ToolRunner;
 
@@ -47,38 +45,6 @@ public class WebPages extends Configured implements Tool {
         job.setNumReduceTasks(2);
         return job;
     }
-
-    Job getJobConf2(String webPagesTable, String webSitesTable, String outPath)  throws IOException {
-        Job job = Job.getInstance(getConf(), WebPages.class.getCanonicalName());
-        job.setJarByClass(WebPages.class);
-
-        job.setOutputKeyClass(Text.class);
-        job.setOutputValueClass(Text.class);
-        TextOutputFormat.setOutputPath(job, new Path(outPath));
-        job.setOutputFormatClass(TextOutputFormat.class);
-
-        /// инициализируем scans
-        List<Scan> scans = new ArrayList<>();
-        Scan scan1 = new Scan();
-        Scan scan2 = new Scan();
-        scan1.setAttribute("scan.attributes.table.name", Bytes.toBytes(webPagesTable));
-        scan2.setAttribute("scan.attributes.table.name", Bytes.toBytes(webSitesTable));
-        scans.add(scan1);
-        scans.add(scan2);
-
-        WebPagesMapper.setWebPagesTable(job, webPagesTable);
-        WebPagesMapper.setWebSitesTable(job, webSitesTable);
-        TableMapReduceUtil.initTableMapperJob(scans, WebPagesMapper.class, Text.class, Text.class, job);
-        job.setMapOutputKeyClass(Text.class);
-        job.setMapOutputValueClass(Text.class);
-        job.setPartitionerClass(WebPagesPartitioner.class);
-        job.setSortComparatorClass(WebPagesSortComporator.class);
-        job.setGroupingComparatorClass(WebPagesGroupComporator.class);
-        job.setReducerClass(TestReduser.class);
-        job.setNumReduceTasks(2);
-        return job;
-    }
-
     @Override
     public int run(String[] args) throws Exception {
         Job job = getJobConf(args[0], args[1]);

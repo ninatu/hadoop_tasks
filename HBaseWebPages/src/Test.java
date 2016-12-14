@@ -3,6 +3,8 @@ import org.apache.hadoop.io.MD5Hash;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Created by nina on 01.12.16.
@@ -16,6 +18,12 @@ public class Test {
         RobotsFilter filter = new RobotsFilter();
         filter.addRules(rules);
         System.out.println(filter.isDisallowed("http://kabriolet.ru/orphus/orphus.htm#!akrboiel@takrboiel.tur"));
+        String str = "(){}.\\";
+        Pattern regex = Pattern.compile("([(){}.\\\\])");
+        Matcher regexMatcher = regex.matcher(str);
+        System.out.println(regexMatcher.replaceAll("\\\\" + "$1"));
+
+        //str = str.replaceAll(, "\\");
 
         //String rules = "Disallow: /users\n" +
         //        "Disallow: *.php$\n" +

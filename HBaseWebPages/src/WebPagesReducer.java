@@ -7,25 +7,12 @@ import org.apache.hadoop.io.MD5Hash;
 import org.apache.hadoop.io.Text;
 
 import java.io.IOException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 
 public class WebPagesReducer extends TableReducer<Text, Text, ImmutableBytesWritable> {
     String identSite = new String("a");
     String identUrl = new String("b");
-
     private static byte[] cf = Bytes.toBytes("docs");
     private static byte[] columnDisabled = Bytes.toBytes("disabled");
-    MessageDigest rowDigest;
-
-    @Override
-    public void setup(Context context) {
-        try {
-            rowDigest = MessageDigest.getInstance("MD5");
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-    }
 
     @Override
     public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
@@ -40,12 +27,10 @@ public class WebPagesReducer extends TableReducer<Text, Text, ImmutableBytesWrit
                 boolean predDisabled = mark.compareTo("Y") == 0 ? true : false;
                 boolean rightDisabled = robots.isDisallowed(url);
                 if (rightDisabled == true && predDisabled == false) {
-                    //Put put = new Put(rowDigest.digest(url.getBytes()));
                     Put put = new Put(Bytes.toBytes(MD5Hash.digest(url).toString()));
                     put.addColumn(cf, columnDisabled, Bytes.toBytes("Y"));
                     context.write(null, put);
                 } else if (rightDisabled == false && predDisabled == true){
-                    //Delete delete = new Delete(rowDigest.digest(url.getBytes()));
                     Delete delete = new Delete(Bytes.toBytes(MD5Hash.digest(url).toString()));
                     delete.addColumn(cf, columnDisabled);
                     context.write(null, delete);
