@@ -3,6 +3,7 @@
  */
 public class Test {
     public static void main(String[] args) {
+
         String rules = "Disallow: /users\n" +
                 "Disallow: *.php$\n" +
                 "Disallow: */cgi-bin/\n" +
@@ -28,5 +29,9 @@ public class Test {
         System.out.println("true:" + "we disDisallowed only the whole match" + filter.isDisallowed("/the/very/secret.page.html"));
         System.out.println("true:" + "we disDisallowed only the whole match" + filter.isDisallowed("/very/secret.page.html?blah"));
         System.out.println("true:" + "we disDisallowed only the whole match" + filter.isDisallowed("/the/very/secret.page.html?blah"));
+        String a = new String(new byte[0]);
+        System.out.println("AAA" + a);
+
+
     }
 }

@@ -15,9 +15,8 @@ public class RobotsFilter {
     }
 
     public boolean isDisallowed(String url) {
+        //url = url.replaceAll("\\*", "\\\\*");
         for (String rule: rules) {
-            //System.out.println(rule + ":" + url);
-            //System.out.flush();
             if (url.matches(rule)) {
                 return true;
             }
@@ -30,6 +29,9 @@ public class RobotsFilter {
             rule += "*";
         }
         rule = rule.replaceAll("\\*", "\\.\\*");
+        rule = rule.replaceAll("\\(", "\\\\(");
+        rule = rule.replaceAll("\\)", "\\\\)");
+        //System.out.println(rule);
         return rule;
     }
 

@@ -31,9 +31,9 @@ public class WebPagesReducer extends TableReducer<Text, Text, ImmutableBytesWrit
         RobotsFilter robots = new RobotsFilter();
         for(Text value: values) {
             String ident = key.toString().substring(0, 1);
-            if (ident == identSite) {
+            if (ident.compareTo(identSite) == 0) {
                 robots.addRules(value.toString());
-            } else if (ident ==identUrl) {
+            } else if (ident.compareTo(identUrl)== 0) {
                 String url = value.toString();
                 boolean disabled = robots.isDisallowed(url);
                 if (disabled) {

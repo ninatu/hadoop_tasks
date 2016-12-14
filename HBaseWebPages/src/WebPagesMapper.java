@@ -11,8 +11,8 @@ import java.net.URL;
 import java.util.Arrays;
 
 public class WebPagesMapper extends TableMapper<Text, Text> {
-private static byte[] webPagesTable = Bytes.toBytes("webpages");
-private static byte[] webSitesTable = Bytes.toBytes("websites");
+    private static byte[] webPagesTable = Bytes.toBytes("webpages_nina");
+    private static byte[] webSitesTable = Bytes.toBytes("websites_nina");
 
     private static byte[] cfDocs = Bytes.toBytes("docs");
     private static byte[] columnUrl = Bytes.toBytes("url");
@@ -33,27 +33,19 @@ private static byte[] webSitesTable = Bytes.toBytes("websites");
                 try {
                     URL t_url = new URL(url);
                     String host = t_url.getHost();
-                    context.write(new Text("b" + hostToStandart(host)), new Text(url));
+                    context.write(new Text("b" + Utils.hostToStandart(host)), new Text(url));
                 } catch (MalformedURLException e) {
 
                 }
             }
         } else if (Arrays.equals(tableName, webSitesTable)) {
-            String site = new String(columns.getValue(cfInfo, columnSite));
-            String robots = new String(columns.getValue(cfInfo, columnRobots));
-            if (robots == null) {
-                robots = new String("");
-            }
-            if (site != null) {
-                context.write(new Text("a" + hostToStandart(site)), new Text(robots));
+            byte[] siteBytes = columns.getValue(cfInfo, columnSite);
+            byte[] robotsBytes = columns.getValue(cfInfo, columnRobots);
+            if (robotsBytes != null && siteBytes != null) {
+                context.write(new Text("a" + Utils.hostToStandart(new String(siteBytes))),
+                        new Text(new String(robotsBytes)));
             }
         }
-    }
-    private String hostToStandart(String host) {
-        host = host.trim();
-        host = host.replaceAll("/+$", "");
-        host = host.replaceAll("^/+", "");
-        return host;
-    }
 
+    }
 }
